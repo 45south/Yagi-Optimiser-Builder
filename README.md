@@ -32,48 +32,6 @@ settings.
   the authoritative reference; if this README and that file ever
   disagree, trust `FIELD_REFERENCE.md`
 
-## Build
-
-Needs `git`, `cmake`, and a C++17-capable `g++` (MinGW-w64 is fine).
-
-```
-make necpp     # one-time: clones and builds the NEC2++ library into ./necpp
-make           # builds yagi_optimize (both it and yagi_gui.exe together, on Windows)
-```
-
-On Linux/macOS, plain `make` only builds the console tool (the GUI needs
-`windows.h`, so it's skipped automatically there rather than failing).
-On Windows, `make` builds both together in one step; `make gui` on its
-own rebuilds just the GUI, e.g. after only editing GUI source files.
-
-`make clean` removes build output; `make distclean` also removes the
-cloned `necpp/` tree. After a `clean`, plain `make` rebuilds everything
-correctly on Windows (both targets together) — but `make gui` on its own
-only rebuilds the GUI, so running just that after a `clean` leaves
-`yagi_optimize.exe` deleted and not rebuilt. Use plain `make` unless
-you're deliberately rebuilding just one piece.
-
-If you already have necpp built elsewhere: `make NECPP_DIR=/path/to/necpp`.
-
-By hand, same steps the Makefile runs:
-
-```
-git clone https://github.com/tmolteno/necpp.git
-cd necpp
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
-cmake --build build --target necpp_static -j4
-cd ..
-
-gcc -O2 -Wall -fopenmp -c yagi_optimize.c -I necpp/src -o yagi_optimize.o
-g++ -O2 -Wall -fopenmp -static -o yagi_optimize yagi_optimize.o necpp/build/src/libnecpp.a -lm
-```
-
-On Windows/MSYS2, `make necpp` picks the MinGW Makefiles cmake generator
-automatically; by hand, add `-G "MinGW Makefiles"` to the first `cmake`
-line. The GUI (`yagi_gui.c`/`.rc`/`resource.h`) is plain Win32 C with no
-necpp dependency — see the `make gui` recipe in the `Makefile` if
-building it by hand.
-
 ## Quick start
 
 **GUI:** run `yagi_gui.exe`, fill in the fields (or pick a **Priority
@@ -164,14 +122,3 @@ Gain/F-B/sidelobe are evaluated at the pattern's *actual* peak elevation
 for each design, found by a small scan rather than assumed to sit at the
 horizon — this matters specifically for stacked-reflector designs, which
 aren't vertically symmetric and can have a genuinely tilted peak.
-
-## A note on how this was built
-
-This tool, its GUI, and every fix described in `FIELD_REFERENCE.md`'s
-version history came out of an extended, iterative conversation — real
-bugs were found (and fixed) specifically because real designs were run
-through it and the results didn't match what EZNEC reported for the same
-geometry. If something looks wrong, it's worth reporting exactly that
-way: what you expected, what you got, and ideally a comparison against
-an independent source (EZNEC, 4nec2, hand calculation). That's how every
-fix so far has actually been found.
