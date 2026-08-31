@@ -24,7 +24,7 @@ settings.
 
 ## Documentation
 
-- **This file** — build instructions, quick start, how it works
+- **This file** — Quick start, how it works
 - **[USER_GUIDE.md](USER_GUIDE.md)** — day-to-day usage, workflows, what
   the output means
 - **[FIELD_REFERENCE.md](FIELD_REFERENCE.md)** — every setting in both
