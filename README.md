@@ -1,6 +1,6 @@
 # Yagi Optimiser (NEC2++ + Differential Evolution)
 
-**v1.0.0015** — Dave Headland — https://github.com/45south
+**v1.0.0039** — Dave Headland — https://github.com/45south
 
 Searches element lengths, spacings, and (optionally) stacking heights for
 a Yagi — multiple reflectors, one driven element, multiple directors —
@@ -24,13 +24,57 @@ settings.
 
 ## Documentation
 
-- **This file** — Quick start, how it works
+- **This file** — build instructions, quick start, how it works
 - **[USER_GUIDE.md](USER_GUIDE.md)** — day-to-day usage, workflows, what
   the output means
 - **[FIELD_REFERENCE.md](FIELD_REFERENCE.md)** — every setting in both
   the GUI and the `.cfg` file, in detail, with recommended values —
   the authoritative reference; if this README and that file ever
   disagree, trust `FIELD_REFERENCE.md`
+- **[CHANGELOG.md](CHANGELOG.md)** — build-by-build history of what
+  changed and why
+
+## Build
+
+Needs `git`, `cmake`, and a C++17-capable `g++` (MinGW-w64 is fine).
+
+```
+make necpp     # one-time: clones and builds the NEC2++ library into ./necpp
+make           # builds yagi_optimize (both it and yagi_gui.exe together, on Windows)
+```
+
+On Linux/macOS, plain `make` only builds the console tool (the GUI needs
+`windows.h`, so it's skipped automatically there rather than failing).
+On Windows, `make` builds both together in one step; `make gui` on its
+own rebuilds just the GUI, e.g. after only editing GUI source files.
+
+`make clean` removes build output; `make distclean` also removes the
+cloned `necpp/` tree. After a `clean`, plain `make` rebuilds everything
+correctly on Windows (both targets together) — but `make gui` on its own
+only rebuilds the GUI, so running just that after a `clean` leaves
+`yagi_optimize.exe` deleted and not rebuilt. Use plain `make` unless
+you're deliberately rebuilding just one piece.
+
+If you already have necpp built elsewhere: `make NECPP_DIR=/path/to/necpp`.
+
+By hand, same steps the Makefile runs:
+
+```
+git clone https://github.com/tmolteno/necpp.git
+cd necpp
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF
+cmake --build build --target necpp_static -j4
+cd ..
+
+gcc -O2 -Wall -fopenmp -c yagi_optimize.c -I necpp/src -o yagi_optimize.o
+g++ -O2 -Wall -fopenmp -static -o yagi_optimize yagi_optimize.o necpp/build/src/libnecpp.a -lm
+```
+
+On Windows/MSYS2, `make necpp` picks the MinGW Makefiles cmake generator
+automatically; by hand, add `-G "MinGW Makefiles"` to the first `cmake`
+line. The GUI (`yagi_gui.c`/`.rc`/`resource.h`) is plain Win32 C with no
+necpp dependency — see the `make gui` recipe in the `Makefile` if
+building it by hand.
 
 ## Quick start
 
@@ -98,6 +142,13 @@ detail on every one of these:
   within a single run instead of needing two manually-seeded passes.
 - **Multi-threaded** (OpenMP) — uses all available CPU cores by default;
   cap it with `max_threads` if running more than one instance at once.
+- **Wider bandwidth via a phased driven pair** (`n_driven`) — a second
+  driven dipole phased against the first, connected by a transmission-
+  line strap, for a modest bandwidth gain over a single driven element.
+  See `FIELD_REFERENCE.md`'s "Driven Pair" section.
+- **A DL6WU-style seed generator** — a starting geometry approximating
+  the well-known DL6WU long-Yagi taper, for a given director count and
+  frequency, ready to hand straight to `seed_file`.
 
 ## How it works
 
@@ -105,11 +156,13 @@ All-free-space model (no ground) — standard for comparing Yagi designs
 on gain/F-B/impedance; add height/ground effects separately once you've
 picked a design (real-ground modelling has its own quirks, like a
 genuine gain null at exactly 0° elevation — see `USER_GUIDE.md` if you
-hit that in EZNEC). Elements are modelled as single wires, driven element
-fed at its centre. Search is a differential-evolution algorithm: a
-population of candidate designs is repeatedly mutated and the better
-performer kept, over many generations — this handles a noisy,
-non-convex, multi-objective search far better than brute-force gridding.
+hit that in EZNEC). Elements are modelled as single wires; the driven
+element (or, for `n_driven >= 2`, the driven chain — see
+`FIELD_REFERENCE.md`) is fed at its centre. Search is a differential-
+evolution algorithm: a population of candidate designs is repeatedly
+mutated and the better performer kept, over many generations — this
+handles a noisy, non-convex, multi-objective search far better than
+brute-force gridding.
 
 Score per candidate combines weighted gain, F/B, and sidelobe
 suppression, minus penalties for VSWR above target, pattern squint, boom
@@ -119,6 +172,18 @@ whether a run is still improving, not an absolute measure (see
 `USER_GUIDE.md` if this comes up).
 
 Gain/F-B/sidelobe are evaluated at the pattern's *actual* peak elevation
-for each design, found by a small scan rather than assumed to sit at the
-horizon — this matters specifically for stacked-reflector designs, which
-aren't vertically symmetric and can have a genuinely tilted peak.
+for each design, found by a small scan (±50° from horizon) rather than
+assumed to sit at the horizon — this matters specifically for
+stacked-reflector and multi-driven-element designs, which aren't
+vertically symmetric and can have a genuinely tilted peak.
+
+## A note on how this was built
+
+This tool, its GUI, and every fix described in `CHANGELOG.md` came out
+of an extended, iterative conversation — real bugs were found (and
+fixed) specifically because real designs were run through it and the
+results didn't match what EZNEC reported for the same
+geometry. If something looks wrong, it's worth reporting exactly that
+way: what you expected, what you got, and ideally a comparison against
+an independent source (EZNEC, 4nec2, hand calculation). That's how every
+fix so far has actually been found.
