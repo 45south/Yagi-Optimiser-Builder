@@ -1,6 +1,6 @@
 # Yagi Optimiser (NEC2++ + Differential Evolution)
 
-**v1.0.0039** — Dave Headland — https://github.com/45south
+**v1.0.039** — Dave Headland — https://github.com/45south
 
 Searches element lengths, spacings, and (optionally) stacking heights for
 a Yagi — multiple reflectors, one driven element, multiple directors —
@@ -30,7 +30,7 @@ settings.
 - **(FIELD REFERENCE.pdf)** — every setting in both
   the GUI and the `.cfg` file, in detail, with recommended values —
   the authoritative reference; if this README and that file ever
-  disagree, trust `FIELD_REFERENCE.md`
+  disagree, trust `FIELD_REFERENCE.pdf`
 
 ## Quick start
 
@@ -101,7 +101,7 @@ detail on every one of these:
 - **Wider bandwidth via a phased driven pair** (`n_driven`) — a second
   driven dipole phased against the first, connected by a transmission-
   line strap, for a modest bandwidth gain over a single driven element.
-  See `FIELD_REFERENCE.md`'s "Driven Pair" section.
+  See `FIELD_REFERENCE.pdf`'s "Driven Pair" section.
 - **A DL6WU-style seed generator** — a starting geometry approximating
   the well-known DL6WU long-Yagi taper, for a given director count and
   frequency, ready to hand straight to `seed_file`.
@@ -111,10 +111,10 @@ detail on every one of these:
 All-free-space model (no ground) — standard for comparing Yagi designs
 on gain/F-B/impedance; add height/ground effects separately once you've
 picked a design (real-ground modelling has its own quirks, like a
-genuine gain null at exactly 0° elevation — see `USER_GUIDE.md` if you
+genuine gain null at exactly 0° elevation — see `USER_GUIDE.pdf` if you
 hit that in EZNEC). Elements are modelled as single wires; the driven
 element (or, for `n_driven >= 2`, the driven chain — see
-`FIELD_REFERENCE.md`) is fed at its centre. Search is a differential-
+`FIELD_REFERENCE.pdf`) is fed at its centre. Search is a differential-
 evolution algorithm: a population of candidate designs is repeatedly
 mutated and the better performer kept, over many generations — this
 handles a noisy, non-convex, multi-objective search far better than
@@ -125,7 +125,7 @@ suppression, minus penalties for VSWR above target, pattern squint, boom
 length outside your limits, and any floor/ceiling violations. There's no
 knowable "perfect score" to compare against — it's a relative signal for
 whether a run is still improving, not an absolute measure (see
-`USER_GUIDE.md` if this comes up).
+`USER_GUIDE.pdf` if this comes up).
 
 Gain/F-B/sidelobe are evaluated at the pattern's *actual* peak elevation
 for each design, found by a small scan (±50° from horizon) rather than
